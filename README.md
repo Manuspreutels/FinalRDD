@@ -12,7 +12,7 @@ TP Final de Redes de Datos. Desarrollo de APIs, uso de protocolos de internet y 
 
 ### Ejecución del servidor
 
-Ejecuta el siguiente comando en una terminal: `uvicorn --host [IP] api:app --reload`
+Ejecuta el siguiente comando en una terminal: `uvicorn --host [IP] servidor:app --reload`
 , donde [IP] puede ser 127.0.0.1 para que solo sea accesible de forma local (mismo dispositivo),
 o 0.0.0.0 para que pueda ser visto por otros dispositivos en la red.
 
