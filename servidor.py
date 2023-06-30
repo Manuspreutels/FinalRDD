@@ -48,27 +48,29 @@ def buscar_libro(title : str = None, author : str = None,
     biblioteca = []
     
     # Si no se especifican los años mínimos y máximos, serán -inf e inf
-    if minYear == None:
-        minYear = -sys.maxsize-1
-    if maxYear == None:
-        maxYear = sys.maxsize
-    for libro in templibros:
-        if libro["year"] >= minYear and libro["year"] <=  maxYear:
-            biblioteca.append(libro)
-    templibros = biblioteca
-    biblioteca = []
+    if minYear != None or maxYear != None:
+        if minYear == None:
+            minYear = -sys.maxsize-1 # Minimo valor representable
+        if maxYear == None:
+            maxYear = sys.maxsize  # Máximo valor representable
+        for libro in templibros:
+            if libro["year"] >= minYear and libro["year"] <=  maxYear:
+                biblioteca.append(libro)
+        templibros = biblioteca
+        biblioteca = []
 
     #lo mismo ocurrirá con las páginas
-    if minPages == None:
-        minPages = 0
-    if maxPages == None:
-        maxPages = sys.maxsize
-    for libro in templibros:
-        if libro["pages"] >= minPages and libro["pages"] <=  maxPages:
-            biblioteca.append(libro)
-    templibros = biblioteca  # Nos quedamos solo con los elementos de templibros
-                             # que cumplan la propiedad
-    biblioteca = []
+    if minPages != None or maxPages != None:
+        if minPages == None:
+            minPages = 0
+        if maxPages == None:
+            maxPages = sys.maxsize
+        for libro in templibros:
+            if libro["pages"] >= minPages and libro["pages"] <=  maxPages:
+                biblioteca.append(libro)
+        templibros = biblioteca  # Nos quedamos solo con los elementos de templibros
+                                # que cumplan la propiedad
+        biblioteca = []
     
     for i in range(0,4):
         if props[i] != None:
