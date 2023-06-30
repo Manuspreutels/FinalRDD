@@ -6,23 +6,26 @@ import io
 
 # Función para mostrar los resultados
 # de una forma agradable para el usuario
-def mostrar_resultado(resp):
-    dicts = resp.json()
-    i = 1
-    for libro in dicts:
-        print("Libro n°: " + str(i))
-        print("Titulo: " + libro["title"] + \
-              " | Año: " + str(libro["year"]) + \
-              " | Autor: " + libro["author"])
-        print("País de Origen: " + libro["country"] + \
-              " | Idioma: " + libro["language"] + \
-              " | N° de Páginas: " + str(libro["pages"]))
-        print("Link: " + libro["link"].strip())
-        print("Link de imagen: " + libro["imageLink"])
-        
-        i += 1
-    if i == 1:
-        print("No hubieron resultados")
+def mostrar_resultado(resp, modoJ : bool):
+    if modoJ:
+        print(resp.text)
+    else:
+        dicts = resp.json()
+        i = 1
+        for libro in dicts:
+            print("Libro n°: " + str(i))
+            print("Titulo: " + libro["title"] + \
+                " | Año: " + str(libro["year"]) + \
+                " | Autor: " + libro["author"])
+            print("País de Origen: " + libro["country"] + \
+                " | Idioma: " + libro["language"] + \
+                " | N° de Páginas: " + str(libro["pages"]))
+            print("Link: " + libro["link"].strip())
+            print("Link de imagen: " + libro["imageLink"])
+            
+            i += 1
+        if i == 1:
+            print("No hubieron resultados")
 
 ip = input("Ingrese la IP del servidor (predeterminado = 127.0.0.1): ")
 if ip == "": ip = "127.0.0.1"
@@ -31,6 +34,7 @@ if puerto == "": puerto = "8000"
 dir = "http://" + ip + ":" + puerto
 
 salir = False
+modoJson = False
 
 while salir == False:
     print("Acción:")
@@ -41,7 +45,8 @@ while salir == False:
     print("      5. Obtener books.json")
     print("      6. Eliminar books.json")
     print("      7. Obtener resumen de la db")
-    print("      8. Salir")
+    print("      8. Cambiar modo de visualización de datos")
+    print("      9. Salir")
     llamada = input("Seleccione una acción: ")    
 
     match llamada:
@@ -60,11 +65,11 @@ while salir == False:
                 case "1":
                     llamada = input("Ingrese el nombre: ")
                     resp = requests.get(dir + "/get-book?title=" + llamada)
-                    mostrar_resultado(resp)
+                    mostrar_resultado(resp, modoJson)
                 case "2":
                     llamada = input("Ingrese el autor: ")
                     resp = requests.get(dir + "/get-book?author=" + llamada)
-                    mostrar_resultado(resp)
+                    mostrar_resultado(resp, modoJson)
                 case "3":
                     params = "?"
                     print("Deje en blanco para no filtrar:")
@@ -75,15 +80,15 @@ while salir == False:
                     if maxYear != "":
                         params += "maxYear=" + maxYear
                     resp = requests.get(dir + "/get-book" + params)
-                    mostrar_resultado(resp)
+                    mostrar_resultado(resp, modoJson)
                 case "4":
                     llamada = input("Ingrese el país de origen: ")
                     resp = requests.get(dir + "/get-book?country=" + llamada)
-                    mostrar_resultado(resp)
+                    mostrar_resultado(resp, modoJson)
                 case "5":
                     llamada = input("Ingrese el idioma: ")
                     resp = requests.get(dir + "/get-book?language=" + llamada)
-                    mostrar_resultado(resp)
+                    mostrar_resultado(resp, modoJson)
                 case "6":
                     params = "?"
                     print("Deje en blanco para no filtrar:")
@@ -94,7 +99,7 @@ while salir == False:
                     if maxPages != "":
                         params += "maxPages=" + maxPages
                     resp = requests.get(dir + "/get-book" + params)
-                    print(resp.text)
+                    mostrar_resultado(resp, modoJson)
                 case "7":
                     params = "?"
                     print("A continuación, inserte los filtros de búsqueda deseados.\n\
@@ -116,7 +121,7 @@ while salir == False:
                     maxPaginas = input("Máximo de páginas: ")
                     if maxPaginas != "": params += "&maxPages=" + maxPaginas
                     resp = requests.get(dir + "/get-book" + params)
-                    mostrar_resultado(resp)
+                    mostrar_resultado(resp, modoJson)
                 case "8":
                     continue
                 case _: 
@@ -142,14 +147,19 @@ while salir == False:
                 params += "&imageLink=" + imageLink
             
             resp = requests.post(dir + "/add-book" + params)
-            if resp.text == "null":
-                print("Creación exitosa.")
-            else:
-                print("Ocurrió un error")
+            if resp.text == "null" and modoJson == False:
+                print("Libro creado exitosamente.")
+            elif resp.text != "null":
+                print("Ha ocurrido un error.")
+            else: print(resp.text)
         case "3":
             llamada = input("Nombre del libro que desea eliminar: ")
             resp = requests.delete(dir + "/delete?title=" + llamada)
-            print(resp.text)
+            if resp.text == "null" and modoJson == False:
+                print("Libro eliminado exitosamente.")
+            elif resp.text != "null":
+                print("Ha ocurrido un error.")
+            else: print(resp.text)
         case "4":
             title = input("Nombre del libro a editar: ")
             resp = requests.get(dir + "/get-book?title=" + title)
@@ -192,8 +202,11 @@ while salir == False:
             if imageLink != "": params += "&imageLink=" + imageLink
 
             resp = requests.put(dir + "/update" + params)
-            if resp.text == "null":
+            if resp.text == "null" and modoJson == False:
                 print("Libro editado exitosamente.")
+            elif resp.text != "null":
+                print("Ha ocurrido un error.")
+            else: print(resp.text)
         case "5":
             print("Descargando...")
             with open("books.json", "w") as file:
@@ -204,12 +217,27 @@ while salir == False:
             os.remove("books.json")   
         case "7":
             resp = requests.get(dir + "/summary")
-            summary = resp.json()
-            print("Cantidad de libros:", summary["cantidad"])
-            print("Propiedades de los libros: ")
-            for propiedad, tipo in summary["campos"].items(): 
-                print("Propiedad: " + propiedad + ",\t tipo: " + tipo)
-        case "8": 
+            if modoJson:
+                print(resp.text)
+            else: 
+                summary = resp.json()
+                print("Cantidad de libros:", summary["cantidad"])
+                print("Propiedades de los libros: ")
+                for propiedad, tipo in summary["campos"].items(): 
+                    print("Propiedad: " + propiedad + ",\t tipo: " + tipo)
+        case "8":
+            print("Existen dos modos de visualización.")
+            print("Modo usuario: Visualización cómoda e intuitiva.")
+            print("Modo Json: Los datos serán devueltos sin procesar, en formato Json.")
+            if modoJson:
+                modo = "modo Json"
+            else:
+                modo = "modo usuario"
+            print("El modo actual es: " + modo)
+            cambio = input("Desea cambiar de modo?(y|Y/n|N): ")
+            if cambio == "y" or cambio == "Y":
+                modoJson = not modoJson
+        case "9": 
             print("Cerrando...")
             salir = True
         case _: print("Opción inválida.")
